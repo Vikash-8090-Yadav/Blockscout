@@ -1,100 +1,110 @@
-import React, { useState, useEffect } from 'react';
-import { GrTransaction } from "react-icons/gr";
+'use client'
 
-function NormalTransaction(props) {
-  const [transactions, setTransactions] = useState([]);
+import { useState, useEffect } from 'react'
+import { ArrowUpRight, Loader } from 'lucide-react'
+
+export default function NormalTransaction({ address }) {
+  const [transactions, setTransactions] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const getData1 = async () => {
+    const getData = async () => {
+      if (!address) return
+
+      setLoading(true)
       try {
-        if(props.address)
-        {const response = await fetch(
-          `https://eth.blockscout.com/api?module=account&action=txlist&address=${props.address}&page=1&offset=10&sort=asc`
-        );
+        const response = await fetch(
+          `https://eth.blockscout.com/api?module=account&action=txlist&address=${address}&page=1&offset=10&sort=asc`
+        )
 
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          throw new Error(`HTTP error! Status: ${response.status}`)
         }
 
-        const data = await response.json();
-        console.log(data);
-        if(data.result === 'Max rate limit reached'){
-          console.log("here")
+        const data = await response.json()
+        if (data.result === 'Max rate limit reached') {
+          console.log("Rate limit reached")
           return
         }
 
-        setTransactions(data.result);}
+        setTransactions(data.result)
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
       }
-    };
+    }
 
-    getData1();
-  }, [props.address]);
+    getData()
+  }, [address])
+
+  const truncateAddress = (address) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
+  }
 
   return (
-    <div className='flex flex-col justify-center mt-[40px]'>
-      <div>
-        <h2 className='text-slate-800 text-2xl font-medium b mx-auto w-[300px] border rounded-xl border-transparent
-          bg-gradient-to-r from-gray-100 to-gray-300
-        hover:scale-110 transition-all duration-500 ease-in-out'>
-         Normal Transactions
+    <div className="min-h-screen bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 py-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-4xl md:text-6xl font-extrabold text-center mb-12 text-white pb-2 tracking-tight leading-none">
+          Normal Transactions
         </h2>
-      </div>
-      <div className='mt-[40px]'>
-        {transactions.length > 0 ? (
-          <table className="min-w-full text-left text-sm whitespace-nowrap">
-            <thead className="uppercase tracking-wider border-b-2 bg-slate-300 border-t">
-              <tr>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  Block Number
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  TimeStamp
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  Hash
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  From
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  To
-                </th>
-                {/* <th scope="col" className="px-6 py-4 border-x text-black bg-slate-300">
-                  Value
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-slate-300">
-                  Gas
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-slate-300">
-                  Gas Price
-                </th> */}
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((transaction) => (
-                <tr key={transaction.hash} className="border-b border-neutral-600   bg-gradient-to-r from-gray-100 to-gray-300 text-black ">
-                  <td className="px-6 py-4 border-x font-medium ">{transaction.blockNumber}</td>
-                  <td className="px-6 py-4 border-x font-medium">{transaction.timeStamp}</td>
-                  <td className="px-6 py-4 border-x font-medium">{transaction.hash}</td>
-                  <td className="px-6 py-4 border-x font-medium">{transaction.from}</td>
-                  <td className="px-6 py-4 border-x font-medium">{transaction.to}</td>
-                  {/* <td className="px-6 py-4 border-x font-medium">{transaction.value}</td>
-                  <td className="px-6 py-4 border-x font-medium">{transaction.gas}</td>
-                  <td className="px-6 py-4 border-x font-medium">{transaction.gasPrice}</td> */}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader className="w-16 h-16 text-white animate-spin" />
+          </div>
         ) : (
-          <p className='text-slate-800 mt-[30px] font-medium text-2xl'>No transactions available.</p>
+          <div className="bg-gray-900 bg-opacity-70 backdrop-filter backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-gray-700">
+            {transactions.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-700">
+                  <thead className="bg-gray-800">
+                    <tr>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        Block
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        Transaction
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        From
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        To
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-gray-900 divide-y divide-gray-700">
+                    {transactions.map((transaction, index) => (
+                      <tr key={transaction.hash} className={`${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900'} hover:bg-gray-700 transition-colors duration-200`}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-300">{transaction.blockNumber}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{new Date(parseInt(transaction.timeStamp) * 1000).toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <a
+                            href={`https://eth.blockscout.com/tx/${transaction.hash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                          >
+                            View
+                            <ArrowUpRight className="ml-1 h-4 w-4" />
+                          </a>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">{truncateAddress(transaction.from)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">{truncateAddress(transaction.to)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold text-gray-300 py-12 text-center">No transactions available.</p>
+            )}
+          </div>
         )}
       </div>
     </div>
-  );
+  )
 }
-
-export default NormalTransaction;
-
-//almost done

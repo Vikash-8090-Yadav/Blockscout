@@ -1,106 +1,112 @@
-import React, { useState, useEffect } from 'react';
-import { Loader } from './Loader';
-import { GrTransaction } from "react-icons/gr";
+'use client'
 
-function InternalTransaction(props) {
-  const [txns, setTxns] = useState([]);
+import { useState, useEffect } from 'react'
+import { ArrowUpRight, Loader } from 'lucide-react'
 
-  var accountAddress = localStorage.getItem("Address");
+export default function InternalTransaction() {
+  const [txns, setTxns] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const accountAddress = localStorage.getItem("Address")
 
   useEffect(() => {
     const getData2 = async () => {
+      if (!accountAddress) return
+
+      setLoading(true)
       try {
-        if(accountAddress)
-        {const response = await fetch(
-`https://eth.blockscout.com/api?module=account&action=txlistinternal&address=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045&page=1&offset=10&sort=asc`
-        );
+        const response = await fetch(
+          `https://eth.blockscout.com/api?module=account&action=txlistinternal&address=${accountAddress}&page=1&offset=10&sort=asc`
+        )
 
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          throw new Error(`HTTP error! Status: ${response.status}`)
         }
 
-        const data = await response.json();
-        console.log('API Response:', data);
-        if(data.result === 'Max rate limit reached'){
-          console.log("here")
+        const data = await response.json()
+        console.log('API Response:', data)
+        if (data.result === 'Max rate limit reached') {
+          console.log("Rate limit reached")
           return
         }
-        // Assuming the API response has a 'result' field containing the transactions
-        setTxns(data.result);}
+        setTxns(data.result)
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
       }
-    };
+    }
 
-    getData2();
-  }, [accountAddress]);
+    getData2()
+  }, [accountAddress])
 
-  console.log('Transactions:', txns);
+  const truncateAddress = (address) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
+  }
 
   return (
-    <div className='flex flex-col justify-center mt-[40px]'>
-      <div>
-        <h2 className='text-slate-800 text-2xl font-medium  mx-auto w-[300px] border rounded-xl border-transparent
-        hover:scale-110 transition-all duration-500 ease-in-out
-        bg-gradient-to-r from-gray-100 to-gray-300'>
+    <div className="min-h-screen bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 py-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-4xl md:text-6xl font-extrabold text-center mb-12 text-white pb-2 tracking-tight leading-none">
           Internal Transactions
         </h2>
-      </div>
-
-      <div className='mt-[40px]'>
-        {txns.length > 0 ? (
-          <table className="min-w-full text-left text-sm whitespace-nowrap">
-            <thead className="uppercase tracking-wider border-b-2 bg-slate-300 border-t">
-              <tr>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  Block Number
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  TimeStamp
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  Hash
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black  bg-gray-300">
-                  From
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-black bg-gray-300">
-                  To
-                </th>
-                {/* <th scope="col" className="px-6 py-4 border-x text-white bg-slate-300">
-                  Value
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-white bg-slate-300">
-                  Gas
-                </th>
-                <th scope="col" className="px-6 py-4 border-x text-white bg-slate-300">
-                  Gas Used
-                </th> */}
-              </tr>
-            </thead>
-            <tbody>
-              {txns?.map((txn) => (
-                <tr key={txn.hash} className="border-b border-neutral-600 bg-gradient-to-r from-gray-100 to-gray-300 text-black  ">
-                  <td className="px-6 py-4 border-x font-medium">{txn.blockNumber}</td>
-                  <td className="px-6 py-4 border-x font-medium">{txn.timeStamp}</td>
-                  <td className="px-6 py-4 border-x font-medium">{txn.transactionHash}</td>
-                  <td className="px-6 py-4 border-x font-medium">{txn.from}</td>
-                  <td className="px-6 py-4 border-x font-medium" >{txn.to}</td>
-                  {/* <td className="px-6 py-4 border-x font-medium">{txn.value}</td>
-                  <td className="px-6 py-4 border-x font-medium">{txn.gas}</td>
-                  <td className="px-6 py-4 border-x font-medium">{txn.gasUsed}</td> */}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <Loader className="w-16 h-16 text-white animate-spin" />
+          </div>
         ) : (
-          <p className='text-slate-800 mt-[30px] font-medium text-2xl flex flex-col justify-center '>
-          OOPS! No transactions available.</p>
+          <div className="bg-gray-900 bg-opacity-70 backdrop-filter backdrop-blur-lg rounded-3xl shadow-2xl overflow-hidden border border-gray-700">
+            {txns.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-700">
+                  <thead className="bg-gray-800">
+                    <tr>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        Block
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        Time
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        Transaction
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        From
+                      </th>
+                      <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-300 uppercase tracking-wider">
+                        To
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-gray-900 divide-y divide-gray-700">
+                    {txns.map((txn, index) => (
+                      <tr key={txn.hash} className={`${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-900'} hover:bg-gray-700 transition-colors duration-200`}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-300">{txn.blockNumber}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{new Date(parseInt(txn.timeStamp) * 1000).toLocaleString()}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <a
+                            href={`https://eth.blockscout.com/tx/${txn.transactionHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                          >
+                            View
+                            <ArrowUpRight className="ml-1 h-4 w-4" />
+                          </a>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">{truncateAddress(txn.from)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400 font-mono">{truncateAddress(txn.to)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-3xl font-bold text-gray-300 py-12 text-center">OOPS! No transactions available.</p>
+            )}
+          </div>
         )}
       </div>
     </div>
-  );
+  )
 }
-
-export default InternalTransaction;
-
