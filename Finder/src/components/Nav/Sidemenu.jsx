@@ -12,7 +12,7 @@ function SideMenu({ isOpen, setIsOpen, logout, address }) {
   const checkBalance = async () => {
     try {
       const response = await fetch(
-        `https://api.etherscan.io/api?module=account&action=balance&address=${accountAddress}&tag=latest&apikey=XRSB1DE9127BU2S22MC5ZXEWCFZXZKWBD8`
+        `https://eth.blockscout.com/api?module=account&action=eth_get_balance&address=${accountAddress}&tag=latest`
       )
 
       if (!response.ok) {
